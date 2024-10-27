@@ -38,6 +38,14 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 # Ensure the upload folder exists
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
+# CORS headers
+@app.after_request
+def after_request(response):
+    response.headers.add('Access-Control-Allow-Origin', '*')  # Permitir todas las fuentes
+    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')  # Encabezados permitidos
+    response.headers.add('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')  # Métodos permitidos
+    return response
+
 # Endpoint for GET method
 @app.route('/api/', methods=['GET'])
 def get_example():
