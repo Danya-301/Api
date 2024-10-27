@@ -6,7 +6,7 @@ from tensorflow.keras.models import load_model
 from tensorflow.keras.preprocessing import image
 
 app = Flask(__name__)
-model = load_model('model_VGG16_v4.keras')
+model = load_model('modelo_mobilenet.keras')
 
 # Lista de nombres de aves
 names = [
