@@ -6,7 +6,7 @@ import numpy as np
 from keras.models import load_model
 from keras.applications.imagenet_utils import preprocess_input
 
-# Define the class names
+# Define los nombres de las clases
 names = [
     'Amazona Alinaranja', 'Amazona de San Vicente', 'Amazona Mercenaria', 'Amazona Real',
     'Aratinga de Pinceles', 'Aratinga de Wagler', 'Aratinga Ojiblanca', 'Aratinga Orejigualda',
@@ -25,27 +25,27 @@ names = [
     'Tiluchi Lomirrufo'
 ]
 
-# Load the model
+# Cargar el modelo
 dirname = os.path.dirname(__file__)
 model_path = os.path.join(dirname, 'model_VGG16_v4.keras')
 modelt = load_model(model_path)
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, resources={r"/api/*": {"origins": "http://127.0.0.1:3000"}})  # Ajusta el origen según sea necesario
 
-# Set the folder where you want to save the uploaded images
+# Configurar la carpeta donde se guardarán las imágenes subidas
 UPLOAD_FOLDER = os.path.join(dirname, 'uploaded_images')
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
-# Ensure the upload folder exists
+# Asegurarse de que la carpeta de subida exista
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
-# Endpoint for GET method
+# Endpoint para el método GET
 @app.route('/api/', methods=['GET'])
 def get_example():
     return jsonify({"message": "Este es un ejemplo de respuesta GET"})
 
-# Endpoint to accept image via POST
+# Endpoint para aceptar imágenes mediante POST
 @app.route('/api/upload_image', methods=['POST'])
 def upload_image():
     if 'file' not in request.files:
@@ -60,16 +60,16 @@ def upload_image():
         filepath = os.path.join(app.config['UPLOAD_FOLDER'], file.filename)
         file.save(filepath)
 
-        # Read and preprocess the image
+        # Leer y preprocesar la imagen
         imaget = cv2.imread(filepath)
         imaget = cv2.resize(imaget, (224, 224))
         xt = preprocess_input(np.array(imaget))
         xt = np.expand_dims(xt, axis=0)
 
-        # Get predictions
+        # Obtener predicciones
         preds = modelt.predict(xt)
 
-        # Get predicted class and confidence
+        # Obtener la clase predicha y la confianza
         predicted_class_index = np.argmax(preds)
         predicted_class_name = names[predicted_class_index]
         confidence_percentage = preds[0][predicted_class_index] * 100
@@ -81,12 +81,12 @@ def upload_image():
     
     return jsonify({"error": "Invalid file type. Only png, jpg, jpeg, gif are allowed."}), 400
 
-# Function to check allowed file types
+# Función para verificar tipos de archivos permitidos
 def allowed_file(filename):
     ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-# Endpoint for POST method
+# Endpoint para el método POST
 @app.route('/api/post_example', methods=['POST'])
 def post_example():
     data = request.get_json()
@@ -100,6 +100,6 @@ def not_found(error):
 def serve_interface():
     return send_from_directory('.', 'index.html')
 
-# Run the app
+# Ejecutar la aplicación
 if __name__ == '__main__':
     app.run(debug=True)
