@@ -1,5 +1,4 @@
 from flask import Flask, request, jsonify, send_from_directory
-from flask_cors import CORS
 import os
 import cv2
 import numpy as np
@@ -31,9 +30,6 @@ model_path = os.path.join(dirname, 'model_VGG16_v4.keras')
 modelt = load_model(model_path)
 
 app = Flask(__name__)
-
-# Permitir solicitudes de http://127.0.0.1:5000
-CORS(app, resources={r"/api/*": {"origins": "http://127.0.0.1:5000"}})
 
 # Set the folder where you want to save the uploaded images
 UPLOAD_FOLDER = os.path.join(dirname, 'uploaded_images')
@@ -97,10 +93,6 @@ def post_example():
 @app.errorhandler(404)
 def not_found(error):
     return jsonify({"error": "Recurso no encontrado"}), 404
-
-@app.route('/favicon.ico')
-def favicon():
-    return '', 204  # Devuelve un 204 No Content para favicon.ico
 
 @app.route('/')
 def serve_interface():
