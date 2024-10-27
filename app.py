@@ -6,7 +6,7 @@ import numpy as np
 from keras.models import load_model
 from keras.applications.imagenet_utils import preprocess_input
 
-# Define los nombres de las clases
+# Define the class names
 names = [
     'Amazona Alinaranja', 'Amazona de San Vicente', 'Amazona Mercenaria', 'Amazona Real',
     'Aratinga de Pinceles', 'Aratinga de Wagler', 'Aratinga Ojiblanca', 'Aratinga Orejigualda',
@@ -25,27 +25,29 @@ names = [
     'Tiluchi Lomirrufo'
 ]
 
-# Cargar el modelo
+# Load the model
 dirname = os.path.dirname(__file__)
 model_path = os.path.join(dirname, 'model_VGG16_v4.keras')
 modelt = load_model(model_path)
 
 app = Flask(__name__)
-CORS(app, resources={r"/api/*": {"origins": "http://127.0.0.1:3000"}})  # Ajusta el origen según sea necesario
 
-# Configurar la carpeta donde se guardarán las imágenes subidas
+# Permitir solicitudes de http://127.0.0.1:5000
+CORS(app, resources={r"/api/*": {"origins": "http://127.0.0.1:5000"}})
+
+# Set the folder where you want to save the uploaded images
 UPLOAD_FOLDER = os.path.join(dirname, 'uploaded_images')
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
-# Asegurarse de que la carpeta de subida exista
+# Ensure the upload folder exists
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
-# Endpoint para el método GET
+# Endpoint for GET method
 @app.route('/api/', methods=['GET'])
 def get_example():
     return jsonify({"message": "Este es un ejemplo de respuesta GET"})
 
-# Endpoint para aceptar imágenes mediante POST
+# Endpoint to accept image via POST
 @app.route('/api/upload_image', methods=['POST'])
 def upload_image():
     if 'file' not in request.files:
@@ -60,16 +62,16 @@ def upload_image():
         filepath = os.path.join(app.config['UPLOAD_FOLDER'], file.filename)
         file.save(filepath)
 
-        # Leer y preprocesar la imagen
+        # Read and preprocess the image
         imaget = cv2.imread(filepath)
         imaget = cv2.resize(imaget, (224, 224))
         xt = preprocess_input(np.array(imaget))
         xt = np.expand_dims(xt, axis=0)
 
-        # Obtener predicciones
+        # Get predictions
         preds = modelt.predict(xt)
 
-        # Obtener la clase predicha y la confianza
+        # Get predicted class and confidence
         predicted_class_index = np.argmax(preds)
         predicted_class_name = names[predicted_class_index]
         confidence_percentage = preds[0][predicted_class_index] * 100
@@ -81,12 +83,12 @@ def upload_image():
     
     return jsonify({"error": "Invalid file type. Only png, jpg, jpeg, gif are allowed."}), 400
 
-# Función para verificar tipos de archivos permitidos
+# Function to check allowed file types
 def allowed_file(filename):
     ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-# Endpoint para el método POST
+# Endpoint for POST method
 @app.route('/api/post_example', methods=['POST'])
 def post_example():
     data = request.get_json()
@@ -96,10 +98,14 @@ def post_example():
 def not_found(error):
     return jsonify({"error": "Recurso no encontrado"}), 404
 
+@app.route('/favicon.ico')
+def favicon():
+    return '', 204  # Devuelve un 204 No Content para favicon.ico
+
 @app.route('/')
 def serve_interface():
     return send_from_directory('.', 'index.html')
 
-# Ejecutar la aplicación
+# Run the app
 if __name__ == '__main__':
     app.run(debug=True)
